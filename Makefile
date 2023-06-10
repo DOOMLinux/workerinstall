@@ -1,14 +1,14 @@
-CFLAGS=
-LDFLAGS=
+CFLAGS=-Wall $(shell pkg-config --cflags libxml-2.0)
+LDFLAGS= $(shell pkg-config --libs libxml-2.0)
 
 all: workerinstall workerupdate 
 #simpledatabasehandler_unit_tests
 
 workerinstall: workerinstall.o
-	$(CC) workerinstall.o -o $(LDFLAGS) workerinstall
+	$(CC) $(LDFLAGS) workerinstall.o -o workerinstall
 
 workerupdate: workerupdate.o
-	$(CC) workerupdate.o -o $(LDFLAGS) workerupdate
+	$(CC) $(LDFLAGS) workerupdate.o -o workerupdate
 
 %.o:%.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -1,1 +1,5 @@
 # workerinstall
+
+Dependency:
+
+- libxml2
