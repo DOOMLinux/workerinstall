@@ -1,5 +1,4 @@
 *.o
-workerupdate
-workerinstall
-simpledatabasehandler/simpledatabasehandler.o
-simpledatabasehandler/unit_tests.o
+./workerupdate
+./workerinstall
+.vscode

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<InstalledPackages>
+    <Package>
+        <Name></Name>
+        <Version></Version>
+        <Dependencies>
+            <Dependancy>
+                <Name></Namy>
+                <Version></Version>
+            </Dependancy>
+        </Dependencies>
+    </Package>
+</InstalledPackages>
