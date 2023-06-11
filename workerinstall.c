@@ -98,7 +98,6 @@ int main(int argc, char **argv)
   arguments.args[7] = NULL;
   arguments.args[8] = NULL;
   arguments.args[9] = NULL;
-  arguments.args[10] = NULL;
 
   arguments.pckg_c = 0;
   arguments.prefix = "/usr";
@@ -135,10 +134,10 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  xmlNodePtr packageNode = NULL;
+//  xmlNodePtr packageNode = NULL;
 
   bool all_packages_and_dependancies_found = false;
-  bool dependancies_to_find = false;
+  //bool dependancies_to_find = false;
   int current_package = 0;
 
   while (!all_packages_and_dependancies_found)
@@ -210,7 +209,7 @@ int main(int argc, char **argv)
     if (current_package >= arguments.pckg_c)
     {
       printf("%d %d\n", current_package, arguments.pckg_c);
-      all_packages_and_dependancies_found = true;
+    //  all_packages_and_dependancies_found = true;
       break;
     }
   }
