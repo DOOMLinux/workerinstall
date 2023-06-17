@@ -157,7 +157,7 @@ bool iterate_package_parser(struct arguments arguments) {
 
   if (doc == NULL)
   {
-    printf("Error: could not parse XML file\n");
+    printf("Can't parse packages.xml, are you pointing the prefix directory to the right root folder, or is workerinstall improperly installed?\n");
     return 1;
   }
 
@@ -326,6 +326,7 @@ void parse_conf(struct arguments arguments)
   FILE *fp = fopen(conf_path, "r");
   if (fp == NULL)
   {
+    printf("Can't read worker.conf, are you pointing the prefix directory to the right root folder, or is workerinstall improperly installed?\n");
     free(conf_path);
     return;
   }
