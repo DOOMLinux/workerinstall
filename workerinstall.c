@@ -7,8 +7,8 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-const char *argp_program_version = "1.0";
-const char *argp_program_bug_address = "<bug@example.com>";
+const char *argp_program_version = "0.1";
+const char *argp_program_bug_address = "<workerinstall@doomlinux.org>";
 
 /* Program documentation. */
 static char doc[] =
@@ -23,6 +23,7 @@ static struct argp_option options[] = {
     {"upgrade", 'u', 0, 0, "Upgrade the package."},
     {"purge", 'p', 0, 0, "Purge the package."},
     {"prefix", 'P', "DIR", 0, "Set the prefix path for the package installation."},
+    {"update", 'U', 0, 0, "Update the worker packagelist."},
     //{"version", 'v', 0, 0, "Print version information."},
     {0}};
 
@@ -30,10 +31,14 @@ static struct argp_option options[] = {
 struct arguments
 {
   char *args[10]; /* arg1 */
-  int pckg_c;
-  int install, upgrade, purge, version;
+  int pckg_c, no_pkgs;
+  int install, upgrade, purge, version, update;
   char *prefix;
 };
+
+bool iterate_package_parser(struct arguments arguments);
+bool update_pkglist(struct arguments arguments);
+void parse_conf(struct arguments arguments);
 
 /* Parse a single option. */
 static error_t
@@ -57,6 +62,9 @@ parse_opt(int key, char *arg, struct argp_state *state)
   case 'v':
     arguments->version = 1;
     break;
+  case 'U':
+    arguments->update = 1;
+    break;
   case 'P':
     arguments->prefix = arg;
     break;
@@ -71,7 +79,8 @@ parse_opt(int key, char *arg, struct argp_state *state)
   case ARGP_KEY_END:
     if (state->arg_num < 1)
       /* Not enough arguments. */
-      argp_usage(state);
+      arguments->no_pkgs = 1;
+      //argp_usage(state);
     break;
 
   default:
@@ -79,6 +88,10 @@ parse_opt(int key, char *arg, struct argp_state *state)
   }
   return 0;
 }
+
+/* workerinstall configuration */
+char MAKEOPTS[255] = {0};
+char UPDATE_URL[255] = {0};
 
 /* Our argp parser. */
 static struct argp argp = {options, parse_opt, 0, 0};
@@ -99,21 +112,42 @@ int main(int argc, char **argv)
   arguments.args[8] = NULL;
   arguments.args[9] = NULL;
 
+  arguments.no_pkgs = 0;
   arguments.pckg_c = 0;
-  arguments.prefix = "/usr";
+  arguments.update = 0;
+  arguments.upgrade = 0;
+  arguments.version = 0;
+  arguments.prefix = "/";
 
   /* Parse the arguments */
   argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-  /* Print the arguments */
-  printf("Package: %s\nInstall directory: %s\n", arguments.args[0], arguments.prefix);
-
-  for (size_t i = 0; i < arguments.pckg_c; i++)
+  if (arguments.update == 1)
   {
-    printf("%s\n", arguments.args[i]);
+    printf("Beginning fetch for information: %s/etc/workerinstall/worker.conf\n", arguments.prefix);
+    update_pkglist(arguments);
+    return;
   }
 
-  char *filename = "/share/workerinstall/packages.xml";
+  if(arguments.no_pkgs) { printf("hey bro you wanna run workerinstall --usage\n"); return 0; }
+
+  /* Print the arguments */
+  printf("Installation prefix: %s\n", arguments.args[0], arguments.prefix);
+
+  /*for (size_t i = 0; i < arguments.pckg_c; i++)
+  {
+    printf("%s\n", arguments.args[i]);
+  }*/
+
+  parse_conf(arguments);
+
+  iterate_package_parser(arguments);
+
+  return 0;
+}
+
+bool iterate_package_parser(struct arguments arguments) {
+  char *filename = "usr/share/workerinstall/packages.xml";
   char *path = malloc(strlen(arguments.prefix) + strlen(filename) + 1);
   strcpy(path, arguments.prefix);
   strcat(path, filename);
@@ -134,10 +168,10 @@ int main(int argc, char **argv)
     return 1;
   }
 
-//  xmlNodePtr packageNode = NULL;
+  //  xmlNodePtr packageNode = NULL;
 
   bool all_packages_and_dependancies_found = false;
-  //bool dependancies_to_find = false;
+  // bool dependancies_to_find = false;
   int current_package = 0;
 
   while (!all_packages_and_dependancies_found)
@@ -209,11 +243,79 @@ int main(int argc, char **argv)
     if (current_package >= arguments.pckg_c)
     {
       printf("%d %d\n", current_package, arguments.pckg_c);
-    //  all_packages_and_dependancies_found = true;
+      //  all_packages_and_dependancies_found = true;
       break;
     }
   }
 
   xmlFreeDoc(doc);
-  return 0;
+}
+
+bool update_pkglist(struct arguments arguments) {
+  parse_conf(arguments);
+
+  //printf("Fetching UPDATE_URL %s\n", UPDATE_URL);
+
+  printf("Beginning CURL %s\n", UPDATE_URL);
+}
+
+void parse_conf(struct arguments arguments)
+{
+  char *conf_fn = "etc/workerinstall/worker.conf";
+  char *conf_path = malloc(strlen(arguments.prefix) + strlen(conf_fn) + 1);
+  strcpy(conf_path, arguments.prefix);
+  strcat(conf_path, conf_fn);
+
+  FILE *fp = fopen(conf_path, "r");
+  if (fp == NULL)
+  {
+    return;
+  }
+
+  char line[1024] = {0};
+  while (!feof(fp))
+  {
+    memset(line, 0, 1024);
+    fgets(line, 1024, fp);
+    if (line[0] == '#')
+    {
+      continue;
+    }
+
+    int len = strlen(line);
+    char *pos = strchr(line, '=');
+    if (pos == NULL)
+    {
+      continue;
+    }
+    char key[255] = {0};
+    char val[255] = {0};
+
+    int offset = 1;
+    if (line[len - 1] == '\n')
+    {
+      offset = 2;
+    }
+
+    strncpy(key, line, pos - line);
+    strncpy(val, pos + 1, line + len - offset - pos);
+
+    // What the actual fucking hell man, I set UPDATE_URL when key matches MAKEOPTS and vice versa
+    // Because this shit somehow fucks it all up when I have it assign MAKEOPTS to val when key is MAKEOPTS.
+    // HOW THE FUCK DO WE CURL -j4 ???
+    char MO_C[255] = {0};
+    strncpy(MO_C, "MAKEOPTS", 9);
+    char UU_C[255] = {0};
+    strncpy(UU_C, "UPDATE_URL", 11);
+    if(strcmp(MO_C, key)) {
+      printf("Setting UPDATE_URL to %s\n", val);
+      strcpy(&UPDATE_URL, val);
+    }
+    if(strcmp(UU_C, key)) {
+      printf("Setting MAKEOPTS to %s\n", val);
+      strcpy(&MAKEOPTS, val);
+    }
+
+    printf("\"%s\" -> \"%s\"\n", key, val);
+  }
 }

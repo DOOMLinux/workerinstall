@@ -1,17 +1,14 @@
 CFLAGS=-Wall $(shell pkg-config --cflags libxml-2.0)
 LDFLAGS= $(shell pkg-config --libs libxml-2.0)
 
-all: bin/workerinstall bin/workerupdate 
+all: bin/workerinstall
 #simpledatabasehandler_unit_tests
 
 bin/workerinstall: workerinstall.o
-	$(CC) $(LDFLAGS) workerinstall.o -o bin/workerinstall
-
-bin/workerupdate: workerupdate.o
-	$(CC) $(LDFLAGS) workerupdate.o -o bin/workerupdate
+	$(CC) $(LDFLAGS) -g workerinstall.o -o bin/workerinstall
 
 %.o:%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -g -c $< -o $@
 
 #simpledatabasehandler_unit_tests:
 #	gcc -g -c ./simpledatabasehandler/unit_tests.c -o ./simpledatabasehandler/unit_tests.o -I./simpledatabasehandler
@@ -19,4 +16,4 @@ bin/workerupdate: workerupdate.o
 #	gcc -g -o ./unit_tests ./simpledatabasehandler/unit_tests.o ./simpledatabasehandler/simpledatabasehandler.o
 
 clean:
-	rm -f *.o bin/workerupdate bin/workerinstall
+	rm -f *.o bin/workerinstall
