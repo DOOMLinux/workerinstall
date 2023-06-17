@@ -134,7 +134,7 @@ int main(int argc, char **argv)
   if(arguments.no_pkgs) { printf("hey bro you wanna run workerinstall --usage\n"); return 0; }
 
   /* Print the arguments */
-  printf("Installation prefix: %s\n", arguments.args[0], arguments.prefix);
+  printf("Installation prefix: %s\n", arguments.prefix);
 
   /*for (size_t i = 0; i < arguments.pckg_c; i++)
   {
@@ -310,7 +310,7 @@ bool update_pkglist(struct arguments arguments) {
  
   curl_global_cleanup();
  
-  return 0;
+  return false;
 
 }
 
