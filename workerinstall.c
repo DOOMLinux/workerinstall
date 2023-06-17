@@ -326,6 +326,7 @@ void parse_conf(struct arguments arguments)
   FILE *fp = fopen(conf_path, "r");
   if (fp == NULL)
   {
+    free(conf_path);
     return;
   }
 
