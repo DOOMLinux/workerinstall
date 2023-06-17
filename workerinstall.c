@@ -310,6 +310,8 @@ bool update_pkglist(struct arguments arguments) {
  
   curl_global_cleanup();
  
+  free(conf_path);
+
   return false;
 
 }
@@ -373,4 +375,6 @@ void parse_conf(struct arguments arguments)
 
     printf("\"%s\" -> \"%s\"\n", key, val);
   }
+
+  free(conf_path);
 }
