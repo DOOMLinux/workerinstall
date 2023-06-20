@@ -203,11 +203,12 @@ int main(int argc, char **argv)
   create_dynamic_array(&packages, &p_size);
   packages = iterate_package_parser(arguments, &p_size, argument_packages, ap_size);
 
-  printf("Successful trip to shadow realm.");
+  printf("Successful trip to shadow realm.\n");
   for (size_t i = 0; i < p_size; i++)
   {
     printf("%s\n", packages[i]);
   }
+  printf("Thanks for watching subscribe and watch part 2 of BASIC\n");
   
   return 0;
 }
@@ -233,6 +234,27 @@ void push_to_dynamic_array(xmlChar ***p, int *s, xmlChar *value)
   }
 
   ptr[size] = xmlStrdup(value);
+  size++;
+
+  *p = ptr;
+  *s = size;
+}
+
+void push_to_dynamic_array_2(char ***p, int *s, char *value)
+{
+  int size = *s;
+  char **ptr = *p;
+
+  if (size == 0)
+  {
+    ptr = (char **)malloc(sizeof(char *));
+  }
+  else
+  {
+    ptr = (char **)realloc(ptr, (size + 1) * sizeof(char *));
+  }
+
+  ptr[size] = strdup(value);
   size++;
 
   *p = ptr;
@@ -452,8 +474,14 @@ char **iterate_package_parser(struct arguments arguments, int *s, char **p1, int
   for (size_t i = 0; i < s3; i++)
   {
     printf("Pushing %s\n", p3[i]);
-    push_to_dynamic_array(&packages, &size, p3[i]);
+    push_to_dynamic_array_2(&packages, &size, p3[i]);
     printf("%d\n", size);
+  }
+
+  printf("O(2) mf. %d\n", size);
+  for (size_t i = 0; i < size; i++)
+  {
+    printf("%s\n", packages[i]);
   }
 
   xmlFreeDoc(doc);
