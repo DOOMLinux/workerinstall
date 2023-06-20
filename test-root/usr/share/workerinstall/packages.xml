@@ -24,4 +24,24 @@
             printf "workerinstall and workerupdate have been replaced."
         </PostInstall> 
     </Package>
+    <Package>
+        <Name>libxml2</Name>
+        <Version>2.10.4</Version>
+        <InstallationType>tar.xz</InstallationType>
+        <InstallationPath>https://download.gnome.org/sources/libxml2/2.10/libxml2-2.10.4.tar.xz</InstallationPath>
+        <Dependencies>
+        </Dependencies>
+        <Instructions>
+            ./configure --prefix=/usr           \
+            --sysconfdir=/etc       \
+            --disable-static        \
+            --with-history          \
+            PYTHON=/usr/bin/python3 \
+            --docdir=/usr/share/doc/libxml2-2.10.4 &amp;&amp;
+            make
+        </Instructions>
+        <Install>
+            make install
+        </Install>
+    </Package>
 </Packages>

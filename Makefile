@@ -17,3 +17,6 @@ bin/workerinstall: workerinstall.o
 
 clean:
 	rm -f *.o bin/workerinstall
+
+test:
+	./bin/workerinstall -v -P test-root/ workerinstall
