@@ -27,6 +27,8 @@ char *prefix; // i.e. root / or ./test-root/
   This is as worker only has one dependancy, libxml2 and libxml2 does not have dependancies.
   If worker had more than 2 dependancies, these dependancies will be grouped under virtual nodes. (virtual as in it is not a package)
   virtual is represented by 'data' as the string "virtual".
+
+  Packages are installed in postorder traversal.
 */
 struct node 
 {

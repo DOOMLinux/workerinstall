@@ -11,3 +11,5 @@ Alright so basically *workerinstall* is basically unmaintainable code since it i
 In worker.c it'll be compiled in bin/worker, once worker is finished I think I can either rename worker to workerinstall or just make a symlink to workerinstall.
 
 But yeah development is happening in worker.c, workerinstall.c is just a mess.
+
+tree.c is from https://www.programiz.com/dsa/binary-tree
