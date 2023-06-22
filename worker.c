@@ -38,6 +38,19 @@ struct node
     struct node *right;
 };
 /*
+   Error handling
+*/
+typedef enum {
+    CRITICAL_HALT,
+    PACKAGE_COULD_NOT_RESOLVE,
+    DEPENDANCY_RECURSION,
+    SYSTEMD_DEPENDANCY, // we absolutely hate systemd
+    USER_ERROR,
+} it_is_error_time;
+void error(it_is_error_time e) {
+    exit(0);
+}
+/*
     argp
 */
 const char *argp_program_version =
