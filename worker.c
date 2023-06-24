@@ -108,7 +108,12 @@ parse_opt(int key, char *arg, struct argp_state *state)
     case 'o':
         arguments->output_file = arg;
         break;
-
+    case 'U':
+        arguments->update_packages = 1;
+        break;
+    case 'P':
+        arguments->prefix = arg;
+        break;
     case ARGP_KEY_ARG:
         // if (state->arg_num >= 2)
         /* Too many arguments. */
@@ -132,7 +137,16 @@ parse_opt(int key, char *arg, struct argp_state *state)
 }
 /* Our argp parser. */
 static struct argp argp = {options, parse_opt, args_doc, doc};
-
+/*
+  functions
+*/
+void start_create_tree(struct arguments arguments);
+void print_created_tree();
+void install_created_tree();
+void update_packages();
+/*
+  begin main
+*/
 int main(int argc, char **argv)
 {
     struct arguments arguments;
@@ -154,7 +168,8 @@ int main(int argc, char **argv)
                0, &arguments);
 
     // copy argument prefix to prefix.
-    strcpy(prefix, arguments.prefix);
+    //strcpy(prefix, arguments.prefix);
+    prefix = arguments.prefix;
     v = arguments.verbose; // copy verbose to v
     q = arguments.silent;  // copy silent to q
 
@@ -166,9 +181,14 @@ int main(int argc, char **argv)
         printf("Usage: worker [-pqsuUv?V] [-P DIR] [--purge] [--prefix=DIR] [--quiet]\n            [--silent] [--upgrade] [--update] [--verbose] [--help] [--usage]\n            [--version] package(s)\n");
     }
 
+    if(arguments.update_packages) {
+        update_packages();
+        return 0;
+    }
+
     // we have to start creating the tree.
 
-    start_create_tree();
+    start_create_tree(arguments);
 
     // print created tree for end user.
     // we also ask, we should probably add --ask as an argument.
@@ -183,14 +203,49 @@ int main(int argc, char **argv)
     exit(0);
 }
 
-void start_create_tree()
+void start_create_tree(struct arguments arguments)
 {
+  // this part is tricky, I don't know how to do it.
+  // basically in this function we have to go through all arguments in arguments.args, 
+  // and then create a tree, depending on the amount of packages it is sort of... difficult to generate it using a binary tree.
+  //
+  // if it's a single package we can just
+  //              (package)
+  //            /
+  //        (dependancy)
+  // no virtual packages required.
+  // if there are multiple packages in the top level we have
+  //              (virtual)
+  //          /            \
+  //      (package)       (package)
+  // if we have 3 or more basically.
+  //              (virtual)
+  //            /          \
+  //     (package)       (virtual)
+  //                   /          \
+  //               (package)       (package)
+  // how tf do I create a tree like this????????????
 }
 
 void print_created_tree()
 {
+  // Implement postorder traversal.
 }
 
 void install_created_tree()
 {
+  // Implement postorder traversal again.
+}
+
+void update_packages() {
+  // This is going to work by system()'ing a source of /etc/workerinstall/worker.conf
+  // Followed by a curl of the address.
+
+  char *format_string = "#!/bin/bash\nsource %setc/workerinstall/worker.conf\ncurl $UPDATE_URL -s -o %susr/share/workerinstall/packages_replace.xml\n";
+ 
+  char *cmd;
+
+  asprintf(&cmd, format_string, prefix, prefix);
+
+  system(cmd);
 }
