@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Packages>
     <Package>
+        <Name>test</Name>
+        <Version>virtual</Version>
+        <InstallationType>virtual</InstallationType>
+        <InstallationPath>virtual</InstallationPath>
+        <Instructions>
+            
+        </Instructions>
+        <Install>
+            
+        </Install>
+    </Package>
+    <Package>
         <Name>workerinstall</Name>
         <Version>latest</Version>
         <InstallationType>git</InstallationType>
