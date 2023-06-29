@@ -14,7 +14,7 @@
     </Package>
     <Package>
         <Name>workerinstall</Name>
-        <Version>latest</Version>
+        <Version>0.1</Version>
         <InstallationType>git</InstallationType>
         <InstallationPath>https://github.com/SirObby/workerinstall.git</InstallationPath>
         <Dependencies>

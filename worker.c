@@ -63,7 +63,7 @@ void error(it_is_error_time e)
     argp
 */
 const char *argp_program_version =
-    "1.0";
+    "0.1";
 const char *argp_program_bug_address =
     "<worker@doomlinux.org>";
 
