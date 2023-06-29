@@ -1,8 +1,11 @@
 CFLAGS=-Wall $(shell pkg-config --cflags libxml-2.0 libcurl)
 LDFLAGS= $(shell pkg-config --libs libxml-2.0 libcurl) -lm
 
-all: bin/worker
+all: bin bin/worker
 #simpledatabasehandler_unit_tests
+
+bin:
+	mkdir bin
 
 bin/workerinstall: workerinstall.o
 	$(CC) $(LDFLAGS) -g workerinstall.o -o bin/workerinstall
