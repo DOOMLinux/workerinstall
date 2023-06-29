@@ -29,3 +29,6 @@ test:
 
 install:
 	@printf "Install not implemented\n"
+
+docker:
+	docker build -t workerinstall .
