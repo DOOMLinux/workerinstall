@@ -23,3 +23,6 @@ clean:
 
 test:
 	./bin/workerinstall -v -P test-root/ workerinstall
+
+install:
+	@printf "Install not implemented\n"
