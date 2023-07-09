@@ -57,7 +57,15 @@ typedef enum
 } it_is_error_time;
 void error(it_is_error_time e)
 {
-    exit(0);
+    // Sure a switch would work.
+    // This is supposed to be funny.
+    char *er = (e == CRITICAL_HALT) ? "CRITICAL HALT" : (e == PACKAGE_COULD_NOT_RESOLVE) ? "PACKAGES COULD NOT BE RESOLVED"
+                                                    : (e == DEPENDANCY_RECURSION)        ? "DEPENDANCY RECURSION"
+                                                    : (e == SYSTEMD_DEPENDANCY)          ? "SYSTEMD DEPENDANCY"
+                                                    : (e == USER_ERROR)                  ? "USER ERROR"
+                                                                                         : "OTHER";
+    printf("\x1b[1;31mworker halt.\x1b[0;22m\nError code: 0x%x %s\n", e, er);
+    exit(-1);
 }
 /*
     argp
@@ -154,6 +162,8 @@ void print_created_tree();
 void install_created_tree();
 void update_packages();
 char *get_package_atom(char *package_name);
+bool is_valid_atom(char *atom);
+void safe_is_valid(char *atom);
 /*
   begin main
 */
@@ -200,6 +210,11 @@ int main(int argc, char **argv)
 
     // we have to start creating the tree.
 
+    if (arguments.silent != 1)
+    {
+        printf("worker ");
+    }
+
     start_create_tree(arguments);
 
     // print created tree for end user.
@@ -217,6 +232,7 @@ int main(int argc, char **argv)
 
 void start_create_tree(struct arguments arguments)
 {
+    printf("start_create_tree\n");
     // this part is tricky, I don't know how to do it.
     // basically in this function we have to go through all arguments in arguments.args,
     // and then create a tree, depending on the amount of packages it is sort of... difficult to generate it using a binary tree.
@@ -248,92 +264,184 @@ void start_create_tree(struct arguments arguments)
 
     // initial.
 
-    bool tree_generated = false;
-
-    if (arguments.amount_of_args == 1)
+    bool is_done = false;
+    int on_what_package = 0;
+    int on_what_previous_package = 0;
+    int iteration_without_package_count_rise = 0;
+    bool is_shift = false; // are we shifting everything over?
+    while (!is_done)
     {
-        // Singular argument.
-        // very easy to generate the tree, basically there are no virtual packages necessary.
-        printf("root: %s\n", arguments.args[0]);
-        root.data = get_package_atom(arguments.args[0]);
-        
+        if (on_what_package >= arguments.amount_of_args)
+            break;
 
-        tree_generated = true;
-    }
-    if(arguments.amount_of_args == 2) {
-        
-        
-        tree_generated = true;
-    }
-    // we just printing the packages for the tree.
-    if (tree_generated == false)
-        for (size_t i = 0; i < arguments.amount_of_args; i++)
+        if (on_what_package == on_what_previous_package)
         {
-            //printf("%s %d\n", arguments.args[i], i);
-    }
-    if(tree_generated == false) {
-        int package_count_without_additional_virtual = 0;
-
-        bool an_extra_virtual = false;
-
-        package_count_without_additional_virtual = arguments.amount_of_args;
-        if(arguments.amount_of_args % 2 != 0) {
-            an_extra_virtual = true;
-            package_count_without_additional_virtual--;
+            iteration_without_package_count_rise += 1;
+        }
+        if (iteration_without_package_count_rise == 5)
+        {
+            printf("start_create_tree loop #1 had 5 iterations with no package_count change.\n");
+            error(PACKAGE_COULD_NOT_RESOLVE);
+            break;
         }
 
-        printf("package_count_without_additional_virtual: %d\n", package_count_without_additional_virtual);
-
-        bool find_layer_count = true;
-        int keep_track_of_division = 1;
-        while(find_layer_count) {
-
-            printf("%d/(2*%d)=%d\n", package_count_without_additional_virtual, keep_track_of_division, package_count_without_additional_virtual / (keep_track_of_division*2));
-
-            if(package_count_without_additional_virtual / (keep_track_of_division*2) == 2) {
-                printf("we have located the root's children\n");
-                find_layer_count = false;
-            }
-            if((package_count_without_additional_virtual / (keep_track_of_division*2)) < 2) {
-                printf("We're less than 2, we've reached root.\n");
-                find_layer_count = false;
-            }
-
-            keep_track_of_division++;
-            if(!find_layer_count) {
-                printf("you just need %d\n", keep_track_of_division);
-            }
+        if (root.data == NULL)
+        {
+            root.data = (is_valid_atom(arguments.args[on_what_package]) == true) ? arguments.args[on_what_package] : "get_package_atom(arguments.args[on_what_package]";
+            on_what_package++;
+            printf("Set root.data %s;\n", root.data);
         }
 
-        int pkg_c = -1;
-        for (size_t i = 0; i < keep_track_of_division + 1; i++)
+        printf("%d %d %d;\n", on_what_package, on_what_previous_package, iteration_without_package_count_rise);
+        on_what_previous_package = on_what_package;
+    }
+
+    // previous code was absolutely useless, add back from git if it proves useful.
+}
+
+void safe_is_valid(char *atom)
+{
+    if (!is_valid_atom(atom))
+    {
+        error(USER_ERROR);
+    }
+}
+bool is_valid_atom(char *atom)
+{
+    bool exists = false;
+    bool found_it_or_checked_it = false; // Have we found the package, or have we checked every source?
+    // Sources we can check are packages.xml and community.xml
+    // community.xml may or may not exist.
+    // this is a while loop instead of a for loop
+    // since adding custom repositories will become a thing.
+    char *repositories[2] = {"packages.xml", "community.xml"};
+    // for now let's hardcode the possible package sources.
+    int checking_source = 0;
+    char aa[strlen(atom) + 1];
+    strcpy(aa, atom);
+
+    
+
+    while (!found_it_or_checked_it)
+    {
+        // printf("checking: %s\n", repositories[checking_source]);
+
+        // it is time we check packages.xml
+
+        char *path = "";
+        asprintf(&path, "%susr/share/workerinstall/%s", prefix, repositories[checking_source]);
+        /*char *filename = "usr/share/workerinstall/packages.xml";
+        char *path = malloc(strlen(prefix) + strlen(filename) + 1);
+        strcpy(path, prefix);
+        strcat(path, filename);*/
+        xmlDocPtr doc = xmlReadFile(path, NULL, 0);
+
+        if (doc == NULL)
         {
-            printf("%d: ", i);
-            if(i == 0) printf("     (virtual)");
-            for (size_t i2 = 0; i2 < i; i2++)
+            printf("Can't parse yo package mate\n");
+            // return 1;
+            found_it_or_checked_it = true; // invalid repository, returning.
+            break;
+        }
+
+        xmlNodePtr root = xmlDocGetRootElement(doc);
+
+        if (root == NULL)
+        {
+            printf("Error: could not get root element\n");
+            xmlFreeDoc(doc);
+            found_it_or_checked_it = true; // invalid repository, returning.
+            break;
+        }
+
+        xmlNodePtr packageNode = NULL;
+        for (xmlNodePtr node = root->children; node != NULL; node = node->next)
+        {
+            if (xmlStrcmp(node->name, (const xmlChar *)"Package") == 0)
             {
-                // JESUS CHRISTUS I AM NOT GOING TO EXPLAIN THIS PRINTF STATEMENT AT ALL.
-                printf("%d%s %d%s   "
-                ,pkg_c + 1,(arguments.args[pkg_c + 1] != NULL) ? get_package_atom(arguments.args[pkg_c + 1]) : "nil"
-                ,pkg_c + 2,(arguments.args[pkg_c + 2] != NULL) ? get_package_atom(arguments.args[pkg_c + 2]) : "nil"
-                );
-                pkg_c += 2;
+                xmlNodePtr nameNode = xmlFirstElementChild(node);
+                if (nameNode != NULL && xmlStrcmp(nameNode->name, (const xmlChar *)"Name") == 0)
+                {
+                    char *t = strtok(atom + 1, "-");
+                    xmlChar *name = xmlNodeGetContent(nameNode);
+                    if (xmlStrcmp(name, (const xmlChar *)t) == 0)
+                    {
+                        packageNode = node;
+
+                        xmlNodePtr versionNode = xmlFirstElementChild(packageNode);
+                        while (versionNode != NULL && xmlStrcmp(versionNode->name, (const xmlChar *)"Version") != 0)
+                        {
+                            versionNode = versionNode->next;
+                        }
+                        //printf("%s\n", strtok(atom + 1, "-"));
+                        // if(version == strtok(aa,"-"))
+
+                        xmlFree(name);
+                        break;
+                    }
+                    xmlFree(name);
+                }
             }
-            printf("\n");
         }
-        printf("%d: ", keep_track_of_division + 2);
-        for (size_t i = 0; i < arguments.amount_of_args; i++)
+
+        if (packageNode == NULL)
         {
-            int pkg_no = i + pkg_c + 1;
-            printf("%d%s %d%s   "
-            ,i + pkg_c + 1,(arguments.args[i] != NULL) ? get_package_atom(arguments.args[i]) : "nil"
-            ,i + 2 + pkg_c,(arguments.args[i + 1] != NULL) ? get_package_atom(arguments.args[i + 1]) : "nil"
-            );
-            i++;
+            // error(PACKAGE_COULD_NOT_RESOLVE);
+            break;
+            // not this repo.
         }
-        printf("\n");
-        
+        else
+        {
+            // Get the Version element of the Package node
+            xmlNodePtr versionNode = xmlFirstElementChild(packageNode);
+            while (versionNode != NULL && xmlStrcmp(versionNode->name, (const xmlChar *)"Version") != 0)
+            {
+                versionNode = versionNode->next;
+            }
+
+            if (versionNode == NULL)
+            {
+                printf("Error: could not find Version element of Package node\n");
+                // xmlFreeDoc(doc);
+                // return 1;
+            }
+
+            // Get the Name element of the Package node
+            xmlNodePtr nameNode = xmlFirstElementChild(packageNode);
+            while (nameNode != NULL && xmlStrcmp(nameNode->name, (const xmlChar *)"Name") != 0)
+            {
+                nameNode = nameNode->next;
+            }
+
+            if (nameNode == NULL)
+            {
+                printf("Error: could not find Name element of Package node\n");
+                // xmlFreeDoc(doc);
+                // return 1;
+            }
+
+            xmlChar *name = xmlNodeGetContent(nameNode);
+            xmlChar *version = xmlNodeGetContent(versionNode);
+            // printf("Package name: %s\nPackage version: %s\n", name, version);
+
+            // printf("=%s-%s", name, version);
+            exists = true;
+            // asprintf(&atom, "=%s-%s", name, version);
+            // printf("I FOUND IT FOR YA %s\n", atom);
+        }
+
+        // increment checking_source and go to next.
+
+        checking_source++;
+        if (checking_source == 2)
+        {
+            found_it_or_checked_it = true;
+        }
+
+        free(path);
     }
+
+    return exists;
 }
 
 char *get_package_atom(char *package_name)
@@ -354,7 +462,7 @@ char *get_package_atom(char *package_name)
     int checking_source = 0;
     while (!found_it_or_checked_it)
     {
-        //printf("checking: %s\n", repositories[checking_source]);
+        // printf("checking: %s\n", repositories[checking_source]);
 
         // it is time we check packages.xml
 
@@ -442,10 +550,10 @@ char *get_package_atom(char *package_name)
 
             xmlChar *name = xmlNodeGetContent(nameNode);
             xmlChar *version = xmlNodeGetContent(versionNode);
-            //printf("Package name: %s\nPackage version: %s\n", name, version);
+            // printf("Package name: %s\nPackage version: %s\n", name, version);
 
             asprintf(&atom, "=%s-%s", name, version);
-            //printf("I FOUND IT FOR YA %s\n", atom);
+            // printf("I FOUND IT FOR YA %s\n", atom);
         }
 
         // increment checking_source and go to next.
