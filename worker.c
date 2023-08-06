@@ -209,7 +209,7 @@ int main(int argc, char **argv)
     }
 
     // we have to start creating the tree.
-
+  
     if (arguments.silent != 1)
     {
         printf("worker ");
